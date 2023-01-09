@@ -15,7 +15,8 @@ import Grid from "@mui/material/Grid";
 import { StyledEngineProvider } from "@mui/material/styles";
 import MenuItem from "@mui/material/MenuItem";
 import Tooltip from "@mui/material/Tooltip";
-import Snackbar, { SnackbarOrigin } from '@mui/material/Snackbar';
+import Snackbar, { SnackbarOrigin } from "@mui/material/Snackbar";
+import Button from "@mui/material/Button";
 // Material
 
 // Tiemeline
@@ -77,14 +78,8 @@ const TimelineComponent = () => {
   const [selectedGroup, setSelectedGroup] = useState<string | undefined>();
   const [selectedTypeView, setSelectedTypeView] = useState("day");
   const [selectedDay, setSelectedDay] = useState<Dayjs | null>(null);
-  const [snack, SetSnack] = useState<any>({
-    open: false,
-    vertical: 'bottom',
-    horizontal: 'center',
-    message: 'asds asd asd'
-  });
 
-  const { vertical, horizontal, open } = snack;
+  const [snack, SetSnack] = useState<{title: string, date: string} | null>(null);
 
   const handleItemMove = (
     itemId: number,
@@ -140,10 +135,14 @@ const TimelineComponent = () => {
   }: any) => {
     const { left: leftResizeProps, right: rightResizeProps } = getResizeProps();
     return (
-        <div {...getItemProps(item.itemProps)}>
-          {itemContext.useResizeHandle ? <div {...leftResizeProps} /> : ""}
-          <Tooltip title={`${itemContext.title}, ${item.start_time.format("h:mm a")} - ${item.end_time.format("h:mm a")}`} arrow>
-
+      <div {...getItemProps(item.itemProps)}>
+        {itemContext.useResizeHandle ? <div {...leftResizeProps} /> : ""}
+        <Tooltip
+          title={`${item.start_time.format(
+            "h:mm a"
+          )} - ${item.end_time.format("h:mm a")}: ${itemContext.title}`}
+          arrow
+        >
           <div
             className={isNow(item) ? "item-container" : "item-container-out"}
             style={{ maxHeight: `${itemContext.dimensions.height}` }}
@@ -164,10 +163,10 @@ const TimelineComponent = () => {
               </p>
             </div>
           </div>
-          </Tooltip>
+        </Tooltip>
 
-          {itemContext.useResizeHandle ? <div {...rightResizeProps} /> : ""}
-        </div>
+        {itemContext.useResizeHandle ? <div {...rightResizeProps} /> : ""}
+      </div>
     );
   };
 
@@ -182,7 +181,7 @@ const TimelineComponent = () => {
     };
     setHour(newTimeLineConfig);
   };
-  
+
   const setHour3 = () => {
     const newTimeLineConfig = {
       second: 1,
@@ -213,21 +212,27 @@ const TimelineComponent = () => {
     setSelectedTypeView(value);
   };
 
-  const handleOpenSnack = (newState: SnackbarOrigin) => () => {
-    SetSnack({ open: true, message: 'wasd', ...newState});
-  };
+  const handleItemChange = (
+    itemDragObject: OnItemDragObjectMove | OnItemDragObjectResize
+  ) => {
 
-  const handleCloseSnack = () => {
-    SetSnack({ ...snack, open: false });
-  };
-
-  const handleItemChange = (itemDragObject: OnItemDragObjectMove | OnItemDragObjectResize) => {
-    handleOpenSnack({
-      vertical: 'bottom',
-      horizontal: 'center',
+    const date = moment(itemDragObject.time).format('HH:mm A');
+    const item = items.find(item => item.id === itemDragObject.itemId);
+    const dif = item.end_time - item.start_time;
+    const title = item.title;
+    console.log(title);
+    
+    const difTime = moment(itemDragObject.time + dif).format('HH:mm A');
+    SetSnack({
+      date: `${date} - ${difTime}`,
+      title: title
     });
-    console.log(itemDragObject)
-  }
+
+
+    setTimeout(() => {
+      SetSnack(null);
+    }, 2000);
+  };
 
   return (
     <div style={{ borderRadius: "20px" }}>
@@ -391,13 +396,19 @@ const TimelineComponent = () => {
             <DateHeader />
           </TimelineHeaders>
         </Timeline>
+        {snack !== null ? (
+          <div className="nav-custom-container">
+            <div className="nav-custom">
+              <div>{snack.title}</div>
+              <br />
+              <div>{snack.date}</div>
+            </div>
+            
+          </div>
+        ) : (
+          <div></div>
+        )}
       </StyledEngineProvider>
-      <Snackbar
-        anchorOrigin={{ vertical, horizontal}}
-        open={open}
-        onClose={handleCloseSnack}
-        message={snack.message}
-      />
     </div>
   );
 };
